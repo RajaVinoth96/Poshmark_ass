@@ -5,25 +5,27 @@ public class ResourceAllocator {
 	HashMap<String,Integer> cpusPerServer;
 	HashMap<String,HashMap<String,Double>> regionToCost;
 	
+	//get_Costs module
 	public ArrayList<ResultObject> getCosts(int hours , int cpus , double price)
 	{
+		//Negative or zero value inputs dont make sense
 		if(hours<=0 || cpus<=0 || price<=0)
 			return new ArrayList<>();
 		
+		//Result of the module
 		ArrayList<ResultObject> sol = new ArrayList<>();
 		
-		//System.out.println("here");
-		
+		//Solve for each region
 		for(String region : regionToCost.keySet())
 		{	
+			//Available server types per region
 			ArrayList<String> serverTypes = new ArrayList<>(regionToCost.get(region).keySet());
-			int[] arr = new int[serverTypes.size()];
 			
-			//System.out.println("inside");
+			//Tracking array to track number of units per server type allocated
+			int[] arr = new int[serverTypes.size()];
 			
 			if(helper(0,price,cpus,hours,serverTypes,arr,region))
 			{
-				//System.out.println("success");
 				ResultObject r = new ResultObject();
 				
 				r.setRegion(region);
@@ -35,9 +37,6 @@ public class ResourceAllocator {
 				{
 				   if(arr[i]==0)
 					   continue;
-				   
-				//   System.out.println(arr[i]);
-				//   System.out.println(regionToCost.get(region).get(serverTypes.get(i)));
 				   
 				   totalcost += arr[i]*regionToCost.get(region).get(serverTypes.get(i))*hours;
 				   servers.put(serverTypes.get(i),arr[i]);
@@ -55,30 +54,27 @@ public class ResourceAllocator {
 	
 	public boolean helper(int i , double price , int cpus , int hours , ArrayList<String> serverTypes , int[] arr , String region)
 	{
-		//System.out.println("inside helper " + i + " price " + price + " cpus " + cpus + " hours " + hours);
-		
+		//satisfied
 		 if(cpus<=0)
 			 return true;
 		 
-		 //System.out.println(regionToCost.get(region).get(serverTypes.get(i)));
-		 //System.out.println("hours " + hours);
 	     double cost = regionToCost.get(region).get(serverTypes.get(i))*hours;
 		 
 	     int noOfCpus = cpusPerServer.get(serverTypes.get(i));
-		  int count = (noOfCpus>cpus)?1 : cpus/noOfCpus;
-	    //System.out.println("cost " + cost);
 	     
+	    //Max units of current server type that can be allocated
+		int count = (noOfCpus>cpus)?1 : cpus/noOfCpus;
+	    
+		//Capacity can be satisfied entirely by this server type alone
 		if(count*cost<=price)
 		{
-			//System.out.println("cost matches");
 			arr[i] = count;
 			return true;
 		}
 		
+		//end of list
 		if(i==serverTypes.size()-1)
 			return false;
-		
-		
 		
 		for(;count>=1;count--)
 		{
@@ -87,11 +83,8 @@ public class ResourceAllocator {
 			 
 			arr[i] = count;
 			double curCost = count*cost;
-			
-			//System.out.println("count " + count);
-			//System.out.println("curCost " + curCost);
-			
-			if(helper(i+1,price-curCost,cpus-count,hours,serverTypes,arr,region))
+						
+			if(helper(i+1,price-curCost,cpus-count*noOfCpus,hours,serverTypes,arr,region))
 				return true;
 			
 			arr[i] = 0;
@@ -99,7 +92,6 @@ public class ResourceAllocator {
 		
 		if(helper(i+1,price,cpus,hours,serverTypes,arr,region))
 		{
-			//System.out.println("success here " + (i+1));
 			return true;
 		}
 		
@@ -151,11 +143,9 @@ public class ResourceAllocator {
 		 temp.put("8xlarge", 1.18);
 		 
 		 r.regionToCost.put("asia",temp);
-		 
-		// System.out.println(r.cpusPerServer);
-		// System.out.println(r.regionToCost);
-		 
-		ArrayList<ResultObject> list = r.getCosts(24,115,184);
+		
+		//Barbara needs to pay 175 dollars 
+		ArrayList<ResultObject> list = r.getCosts(24,115,175);
 		
 		for(ResultObject o : list)
 		{
@@ -165,6 +155,36 @@ public class ResourceAllocator {
 		     System.out.println();
 		}
 		
+		System.out.println(list);
+		
+		//Jack will have to pay 105 dollars
+                list = r.getCosts(7,214,105);
+		
+                System.out.println();
+        
+		for(ResultObject o : list)
+		{
+		     System.out.println(o.getRegion());
+		     System.out.println(o.getTotalCost());
+		     System.out.println(o.getServers());
+		     System.out.println();
+		}
+		
+		System.out.println(list);
+		
+		//Tom can 70 cpus
+		list = r.getCosts(8,70,29);
+			
+	        System.out.println();
+	        
+		for(ResultObject o : list)
+		{
+		    System.out.println(o.getRegion());
+			System.out.println(o.getTotalCost());
+			System.out.println(o.getServers());
+			System.out.println();		   
+		}
+			
 		System.out.println(list);
 	}
 }
